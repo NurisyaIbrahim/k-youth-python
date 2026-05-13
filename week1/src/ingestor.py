@@ -43,7 +43,7 @@ def ingest_all_mhtml(input_dir, output_dir):
             
             html_content = None
             
-            # Walk through all parts to find HTML
+            # Look for all parts to find HTML
             for part in msg.walk():
                 content_type = part.get_content_type()
                 
