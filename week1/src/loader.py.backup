@@ -1,84 +1,94 @@
 # src/loader.py
 import json
 import sqlite3
-import logging
-import hashlib
 from pathlib import Path
-from src.sql_helper import load_sql
-
-logger = logging.getLogger(__name__)
-
-def compute_content_hash(job_title, company, description):
-    """Compute SHA256 hash of job content"""
-    hash_input = f"{job_title}|{company}|{description}"
-    hash_input = hash_input.lower().strip()
-    hash_input = ' '.join(hash_input.split())
-    return hashlib.sha256(hash_input.encode()).hexdigest()
 
 def load_all_jsons(input_dir, output_dir):
+    """
+    Load JSON files from 2_silver into SQLite database at 3_gold
+    """
     input_path = Path(input_dir)
     output_path = Path(output_dir)
     
+    # Create output directory if missing (idempotency)
     output_path.mkdir(parents=True, exist_ok=True)
+    
+    # Database path
     db_path = output_path / "jobs.db"
     
+    # Check if input directory exists
     if not input_path.exists():
-        logger.warning(f"Input directory '{input_dir}' does not exist.")
+        print(f"Warning: Input directory '{input_dir}' does not exist.")
         return
     
+    # Find all JSON files
     json_files = list(input_path.glob("*.json"))
     
     if not json_files:
-        logger.warning(f"No .json files found in '{input_dir}'.")
+        print(f"Warning: No .json files found in '{input_dir}'.")
         return
     
     print("🥇 Gold:...")
     
+    # Connect to database
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Create table using SQL file
-    cursor.execute(load_sql("create_jobs_table"))
+    # Create table with schema (idempotency)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            source_id TEXT PRIMARY KEY,
+            job_title TEXT NOT NULL,
+            company TEXT,
+            description TEXT NOT NULL,
+            tech_stack TEXT
+        )
+    """)
     
     inserted = 0
     skipped = 0
     
+    # Process each JSON file
     for json_file in json_files:
         try:
+            # Read JSON file
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
+            # Extract fields
             source_id = data.get('source_id', '')
             job_title = data.get('job_title', '')
             company = data.get('company', 'Unknown')
             description = data.get('description', '')
             tech_stack = data.get('tech_stack', '')
             
-            # Compute content hash
-            content_hash = compute_content_hash(job_title, company, description)
-            
-            # Insert with quality default 'PENDING'
+            # Insert with INSERT OR IGNORE to prevent duplicates (idempotency)
             cursor.execute("""
-                INSERT OR IGNORE INTO jobs (source_id, job_title, company, description, tech_stack, content_hash, quality)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (source_id, job_title, company, description, tech_stack, content_hash, 'PENDING'))
+                INSERT OR IGNORE INTO jobs (source_id, job_title, company, description, tech_stack)
+                VALUES (?, ?, ?, ?, ?)
+            """, (source_id, job_title, company, description, tech_stack))
             
+            # Check if inserted or skipped
             if cursor.rowcount > 0:
-                logger.info(f"Inserted: {json_file.name}")
+                print(f"✅ Inserted: {json_file.name}")
                 inserted += 1
             else:
-                logger.warning(f"Skipped (duplicate): {json_file.name}")
+                print(f"⏭️ Skipped (duplicate): {json_file.name}")
                 skipped += 1
                 
         except Exception as e:
-            logger.error(f"Error: {json_file.name} | Reason: {str(e)}")
+            print(f"⚠️ Error: {json_file.name} - {str(e)}")
             skipped += 1
     
+    # Commit and close
     conn.commit()
     conn.close()
     
+    # Print summary
     print(f"\n📊 Gold Summary:")
     print(f"Total: {len(json_files)} | Inserted: {inserted} | Skipped: {skipped}")
+    
+    # Show database location
     print(f"\n✅ Database created at: {db_path}")
 
 if __name__ == "__main__":

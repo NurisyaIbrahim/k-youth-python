@@ -1,0 +1,56 @@
+# My Actual Setup Steps
+
+## Installation:
+   98  python main.py process
+   99  cd ~/Desktop/k-youth-python/week1
+  162  python find_exact_criteria.py
+  163  cd ~/Desktop/k-youth-python/week1
+  166  python main.py process
+  167  cd ~/Desktop/k-youth-python/week1
+  217  cd ~/Desktop/k-youth-python/week1
+  219  cd ~/Desktop/k-youth-python/week1
+  221  cd ~/Desktop/k-youth-python/week1
+  225  python main.py ingest
+  226  cd ~/Desktop/k-youth-python/week1
+  230  python main.py process
+  231  cd ~/Desktop/k-youth-python/week1
+  235  unzip ~/Downloads/0_source.zip -d data/0_source/
+  236  cd ~/Desktop/k-youth-python/week1
+  241  unzip ~/Downloads/0_source.zip -d data/0_source/
+  245  python main.py ingest
+  246  [200~cd ~/Desktop/k-youth-python/week1
+  249  python main.py process
+  250  cd ~/Desktop/k-youth-python/week1
+  252  cd ~/Desktop/k-youth-python/week1
+  255  python main.py process
+  256  cd ~/Desktop/k-youth-python/week1
+  259  python main.py process
+  260  cd ~/Desktop/k-youth-python/week1
+  263  cd ~/Desktop/k-youth-python/week1
+  266  cd ~/Desktop/k-youth-python/week1
+  268  python -c "
+  277  cd ~/Desktop/k-youth-python/week1
+  316  python check_all_missing.py
+  317  cd ~/Desktop/k-youth-python/week1
+  320  cd ~/Desktop/k-youth-python/week1
+  322  python -c "
+  336  cd ~/Desktop/k-youth-python/week1
+  337  python -c "
+  352  cd ~/Desktop/k-youth-python/week1
+  353  python -c "
+  385  cd ~/Desktop/k-youth-python/week1
+  386  python -c "
+  417  cd ~/Desktop/k-youth-python/week1
+  420      run_gold() cd ~/Desktop/k-youth-python/week1
+  422  python main.py load
+  426  python -c "
+  434  cd ~/Desktop/k-youth-python/week1
+  439  cd ~/Desktop/k-youth-python/week1
+  444  [200~cd ~/Desktop/k-youth-python/week1
+  447      run_gold() cd ~/Desktop/k-youth-python/week1
+  449  python main.py load
+  461  python -c "
+  469  cd ~/Desktop/k-youth-python/week1
+  471  cd ~/Desktop/k-youth-python
+  474  cd ~/Desktop/k-youth-python
+  478  history | grep -E "uv|python|git|cd|unzip" >> MY_SETUP_STEPS.txt

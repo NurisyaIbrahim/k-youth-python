@@ -1,13 +1,10 @@
 # src/processor.py
 import json
-import re
-import logging
 from pathlib import Path
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
-
+# Data contract - all types are str
 class JobListing(BaseModel):
     source_id: str
     job_title: str
@@ -18,19 +15,21 @@ def process_all_html(input_dir, output_dir):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
     
+    # Create output directory if missing
     output_path.mkdir(parents=True, exist_ok=True)
     
+    # Check if input exists
     if not input_path.exists():
-        logger.warning(f"Input directory '{input_dir}' does not exist.")
+        print(f"Warning: Input directory '{input_dir}' does not exist.")
         return
     
+    # Get all HTML files
     html_files = list(input_path.glob("*.html"))
     
     if not html_files:
-        logger.warning(f"No .html files found in '{input_dir}'.")
+        print(f"Warning: No .html files found in '{input_dir}'.")
         return
     
-    # KEEP print() for header
     print("🥈 Silver:...")
     
     processed = 0
@@ -38,9 +37,11 @@ def process_all_html(input_dir, output_dir):
     total = len(html_files)
     
     for html_file in html_files:
+        # Read HTML with utf-8 encoding
         with open(html_file, 'r', encoding='utf-8') as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
         
+        # 1. Extract source_id from og:url
         og_url = soup.find('meta', property='og:url')
         if og_url and og_url.get('content'):
             url = og_url['content']
@@ -48,25 +49,31 @@ def process_all_html(input_dir, output_dir):
         else:
             source_id = ""
         
+        # 2. Extract job_title from h1 tag
         h1 = soup.find('h1')
         if h1:
             job_title = h1.get_text(separator=" ", strip=True)
         else:
             job_title = ""
         
+        # 3. Extract company from data-automation="advertiser-name"
         company_elem = soup.find(attrs={'data-automation': 'advertiser-name'})
         if company_elem:
+            # Get the text, removing the SVG part
             company = company_elem.get_text(separator=" ", strip=True)
+            # Clean up: remove "<!-- -->" and extra spaces
             company = company.replace('<!-- -->', '').strip()
         else:
             company = ""
         
+        # 4. Extract description from jobAdDetails
         desc_div = soup.find('div', {'data-automation': 'jobAdDetails'})
         if desc_div:
             description = desc_div.get_text(separator=" ", strip=True)
         else:
             description = ""
         
+        # Track missing fields
         missing = []
         if not source_id:
             missing.append("source_id")
@@ -77,14 +84,16 @@ def process_all_html(input_dir, output_dir):
         if not company:
             missing.append("company")
         
+        # Print missing fields
         if missing:
-            # REPLACE with logging
-            logger.warning(f"Missing {', '.join(missing)} in: {html_file.name}")
+            print(f"⚠️ Missing {', '.join(missing)} in: {html_file.name}")
         
+        # Skip if missing job_title OR description (required fields)
         if not job_title or not description:
             skipped += 1
             continue
         
+        # Create validated job listing
         job = JobListing(
             source_id=source_id,
             job_title=job_title,
@@ -92,14 +101,16 @@ def process_all_html(input_dir, output_dir):
             description=description
         )
         
+        # Save as JSON (overwrite existing - no copies)
         output_file = output_path / f"{html_file.stem}.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(job.model_dump(), f, indent=2, ensure_ascii=False)
         
-        # REPLACE with logging
-        logger.info(f"Processed: {html_file.name}")
+        print(f"✅ Processed: {html_file.name}")
         processed += 1
     
-    # KEEP print() for summary
     print(f"\n📊 Silver Summary:")
     print(f"Total: {total} | Processed: {processed} | Skipped: {skipped}")
+
+if __name__ == "__main__":
+    process_all_html("data/1_bronze", "data/2_silver")

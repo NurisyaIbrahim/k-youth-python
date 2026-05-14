@@ -1,18 +1,12 @@
 # main.py
 import sys
-import logging
 from pathlib import Path
 from src.ingestor import ingest_all_mhtml
 from src.processor import process_all_html
 from src.loader import load_all_jsons
 from src.profiler import run_data_profile
 
-# Logging configuration (BONUS #1)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s |%(levelname)s |%(message)s"
-)
-
+# Directory paths
 SOURCE_DIR = Path("data/0_source")
 BRONZE_DIR = Path("data/1_bronze")
 SILVER_DIR = Path("data/2_silver")
@@ -20,18 +14,27 @@ GOLD_DIR = Path("data/3_gold")
 DB_PATH = GOLD_DIR / "jobs.db"
 
 def run_ingest():
+    """Module 1: Extract MHTML to HTML"""
+    print("\n[Module 1] Running Ingest...")
     ingest_all_mhtml(SOURCE_DIR, BRONZE_DIR)
 
 def run_process():
+    """Module 2: Process HTML to JSON"""
+    print("\n[Module 2] Running Process...")
     process_all_html(BRONZE_DIR, SILVER_DIR)
 
 def run_load():
+    """Module 3: Load JSON to SQLite"""
+    print("\n[Module 3] Running Load...")
     load_all_jsons(SILVER_DIR, GOLD_DIR)
 
 def run_profile():
+    """Module 4: Run data profiling"""
+    print("\n[Module 4] Running Profile...")
     run_data_profile(DB_PATH)
 
 def show_commands():
+    """Display available commands"""
     print("\n" + "=" * 50)
     print("AVAILABLE COMMANDS")
     print("=" * 50)
@@ -39,22 +42,26 @@ def show_commands():
     print("  python main.py process  - Module 2: HTML to JSON")
     print("  python main.py load     - Module 3: JSON to SQLite")
     print("  python main.py profile  - Module 4: Data Quality Report")
-    print("  python main.py all      - Run full pipeline")
-    print("=" * 50)
+    print("  python main.py all      - Run full pipeline (ingest -> process -> load -> profile)")
+    print("=" * 50 + "\n")
 
 def main():
+    # Create all necessary directories
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     BRONZE_DIR.mkdir(parents=True, exist_ok=True)
     SILVER_DIR.mkdir(parents=True, exist_ok=True)
     GOLD_DIR.mkdir(parents=True, exist_ok=True)
     
+    # If no command provided, show usage
     if len(sys.argv) < 2:
         print("\nUsage: python main.py [ingest|process|load|profile|all]")
         show_commands()
         return
     
+    # Get command
     command = sys.argv[1].lower()
     
+    # Route to appropriate function using if/elif
     if command == "ingest":
         run_ingest()
     elif command == "process":
@@ -65,17 +72,19 @@ def main():
         run_profile()
     elif command == "all":
         print("\n" + "=" * 50)
-        print("RUNNING FULL ETL PIPELINE")
+        print("RUNNING FULL ETL PIPELINE: ingest -> process -> load -> profile")
         print("=" * 50)
         run_ingest()
         run_process()
         run_load()
         run_profile()
         print("\n" + "=" * 50)
-        print("PIPELINE COMPLETE")
+        print("FULL ETL PIPELINE COMPLETE")
         print("=" * 50)
+    elif command == "help":
+        show_commands()
     else:
-        print(f"Error: Unknown command '{command}'")
+        print(f"\nError: Unknown command '{command}'")
         show_commands()
 
 if __name__ == "__main__":
