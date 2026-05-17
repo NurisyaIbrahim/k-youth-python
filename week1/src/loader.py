@@ -1,4 +1,3 @@
-# src/loader.py
 import json
 import sqlite3
 import logging
@@ -9,7 +8,7 @@ from src.sql_helper import load_sql
 logger = logging.getLogger(__name__)
 
 def compute_content_hash(job_title, company, description):
-    """Compute SHA256 hash of job content"""
+    """BONUS #2: Compute SHA256 hash of job content"""
     hash_input = f"{job_title}|{company}|{description}"
     hash_input = hash_input.lower().strip()
     hash_input = ' '.join(hash_input.split())
@@ -37,7 +36,7 @@ def load_all_jsons(input_dir, output_dir):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Create table using SQL file
+    # BONUS #3: Create table using SQL file
     cursor.execute(load_sql("create_jobs_table"))
     
     inserted = 0
@@ -54,24 +53,22 @@ def load_all_jsons(input_dir, output_dir):
             description = data.get('description', '')
             tech_stack = data.get('tech_stack', '')
             
-            # Compute content hash
+            # BONUS #2: Compute content hash
             content_hash = compute_content_hash(job_title, company, description)
             
-            # Insert with quality default 'PENDING'
-            cursor.execute("""
-                INSERT OR IGNORE INTO jobs (source_id, job_title, company, description, tech_stack, content_hash, quality)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (source_id, job_title, company, description, tech_stack, content_hash, 'PENDING'))
+            # BONUS #3: Insert using SQL file
+            cursor.execute(load_sql("insert_job"), 
+                          (source_id, job_title, company, description, tech_stack, content_hash, 'PENDING'))
             
             if cursor.rowcount > 0:
-                logger.info(f"Inserted: {json_file.name}")
+                logger.info(f"✅ Inserted: {json_file.name} | Hash: {content_hash[:16]}...")
                 inserted += 1
             else:
-                logger.warning(f"Skipped (duplicate): {json_file.name}")
+                logger.warning(f"⏭️ Skipped (duplicate): {json_file.name}")
                 skipped += 1
                 
         except Exception as e:
-            logger.error(f"Error: {json_file.name} | Reason: {str(e)}")
+            logger.error(f"❌ Error: {json_file.name} | Reason: {str(e)}")
             skipped += 1
     
     conn.commit()
@@ -80,6 +77,8 @@ def load_all_jsons(input_dir, output_dir):
     print(f"\n📊 Gold Summary:")
     print(f"Total: {len(json_files)} | Inserted: {inserted} | Skipped: {skipped}")
     print(f"\n✅ Database created at: {db_path}")
+    print(f"✅ BONUS #2: content_hash column added with SHA256 hashing")
+    print(f"✅ BONUS #3: SQL queries loaded from queries/ folder")
 
 if __name__ == "__main__":
     load_all_jsons("data/2_silver", "data/3_gold")

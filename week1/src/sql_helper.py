@@ -2,10 +2,7 @@
 from pathlib import Path
 
 def load_sql(query_name):
-    """
-    Load SQL query from file
-    Usage: query = load_sql('create_jobs_table')
-    """
+    """Load SQL query from file"""
     query_path = Path(__file__).parent.parent / "queries" / f"{query_name}.sql"
     
     if not query_path.exists():

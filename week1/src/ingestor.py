@@ -16,13 +16,13 @@ def ingest_all_mhtml(input_dir, output_dir):
     output_path.mkdir(parents=True, exist_ok=True)
     
     if not input_path.exists():
-        logger.warning(f"Input directory '{input_dir}' does not exist.")
+        logger.warning(f"⚠️ Input directory '{input_dir}' does not exist.")
         return
     
     mhtml_files = list(input_path.glob("*.mhtml")) + list(input_path.glob("*.mht"))
     
     if not mhtml_files:
-        logger.warning(f"No .mhtml files found in '{input_dir}'.")
+        logger.warning(f"⚠️ No .mhtml files found in '{input_dir}'.")
         return
     
     # KEEP print() for header
@@ -60,9 +60,9 @@ def ingest_all_mhtml(input_dir, output_dir):
                             html_content = payload
                     break
             
+            #logging 
             if html_content is None:
-                # REPLACE with logging
-                logger.warning(f"No HTML content found in: {mhtml_path.name}")
+                logger.warning(f"⚠️ Missing description in: {mhtml_path.name}")
                 failed += 1
                 continue
             
@@ -70,13 +70,12 @@ def ingest_all_mhtml(input_dir, output_dir):
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             
-            # REPLACE with logging
-            logger.info(f"Extracted: {mhtml_path.name}")
+
+            logger.info(f"✅ Processed file: {mhtml_path.name}")
             extracted += 1
             
         except Exception as e:
-            # REPLACE with logging
-            logger.error(f"Failed to process: {mhtml_path.name} | Reason: {e}")
+            logger.error(f"❌ Failed to process: {mhtml_path.name} | Reason: {e}")
             failed += 1
     
     # KEEP print() for summary
